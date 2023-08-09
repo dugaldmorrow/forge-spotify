@@ -1,0 +1,97 @@
+modules:
+  macro:
+    - key: uikit-macro
+      function: uikit-macro-fn
+      title: Test Spotify Auth
+      description: Test Spotify Auth
+    - key: spotify-macro
+      resource: macro-resource
+      resolver:
+        function: resolver
+      title: Spotify player
+      description: Inserts a Spotify player
+      config:
+        function: config-function-key
+  function:
+    - key: uikit-macro-fn
+      handler: DebugMacro.renderSpotifyAuthMacro
+      providers:
+        auth:
+          - spotify-api-auth
+    - key: config-function-key
+      handler: SpotifyPlayerConfig.config
+    - key: resolver
+      handler: resolver.handler
+      providers:
+        auth:
+          - spotify-api-auth
+    - key: spotify-profile
+      handler: spotifyProfile.retriever
+resources:
+  - key: macro-resource
+    path: static/spotify/build
+providers:
+  auth:
+    - key: spotify-api-auth
+      name: Spotify API
+      scopes:
+        - 'user-read-private'
+        - 'user-read-email'
+      type: oauth2
+      clientId: 028ef434eb64497f9e9b6c53394e8c1f
+      remotes:
+        - spotify-api
+      bearerMethod: authorization-header
+      actions:
+        authorization:
+          remote: spotify-oauth
+          path: /authorize
+          queryParameters:
+            client_id: 028ef434eb64497f9e9b6c53394e8c1f
+            response_type: code
+            access_type: offline
+            prompt: consent
+        exchange:
+          remote: spotify-oauth
+          path: /api/token
+          resolvers:
+            accessToken: access_token
+            accessTokenExpires: expires_in
+            refreshToken: refresh_token
+        retrieveProfile:
+          remote: spotify-api
+          path: /v1/me
+          function: spotify-profile
+remotes:
+  - key: spotify-oauth
+    baseUrl: https://accounts.spotify.com
+  - key: spotify-api
+    baseUrl: https://api.spotify.com
+permissions:
+  scopes:
+    - 'read:confluence-content.summary'
+    - 'read:page:confluence'
+    - 'write:page:confluence'
+  content:
+    scripts:
+      - 'unsafe-inline'
+      - 'unsafe-hashes'
+    styles:
+      - 'unsafe-inline'
+  external:
+    frames:
+      - 'https://open.spotify.com'
+      - 'https://embed-standalone.spotify.com'
+    scripts:
+      - 'https://open.spotify.com/embed-podcast/iframe-api/v1'
+      - '*'
+    images:
+      - '*'
+    fetch:
+      backend:
+        - 'https://api.spotify.com'
+        - 'https://accounts.spotify.com'
+app:
+  id: ari:cloud:ecosystem::app/bc4afcc6-dc4d-4066-b398-09cedf05e145
+  features:
+    autoUserConsent: false
